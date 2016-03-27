@@ -6,9 +6,9 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 
-from app import app
-from flask import render_template, request, redirect, url_for
-
+from app import app, mysql
+from flask import render_template, request, redirect, url_for, jsonify, json, session
+from werkzeug import generate_password_hash, check_password_hash
 
 ###
 # Routing for your application.
@@ -17,7 +17,78 @@ from flask import render_template, request, redirect, url_for
 @app.route('/')
 def home():
     """Render website's home page."""
+    if session.get('user'):
+        return render_template('userHome.html')
     return render_template('home.html')
+    
+@app.route('/signup/', methods=['POST', 'GET'])
+def signup():
+    if request.method == 'POST':
+        try:
+            email       = request.form['email'].strip()
+            password    = request.form['password'].strip()
+            
+            if email and password:
+                db      = mysql.connect()
+                cursor  = db.cursor()
+                hashed_password = generate_password_hash(password)
+                
+                cursor.callproc('sp_createUser',(email,hashed_password))
+                data = cursor.fetchall()
+    
+                if len(data) is 0:
+                    db.commit()
+                    return json.dumps({'message':'User created successfully !'})
+                else:
+                    return json.dumps({'error':str(data[0])})
+            else:
+                return json.dumps({'html':'<span>Enter the required fields</span>'})
+                
+        except Exception as e:
+            return json.dumps({'error':str(e)})
+        finally:
+            cursor.close() 
+            db.close()     
+            
+    return render_template('signup.html')
+    
+@app.route('/login/', methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        try:
+            username = request.form['inputEmail']
+            password = request.form['inputPassword']
+            
+            db      = mysql.connect()
+            cursor  = db.cursor()
+            cursor.callproc('sp_validateLogin',(_username,))
+            data    = cursor.fetchall()
+            
+            if len(data) > 0:
+                if check_password_hash(str(data[0][3]),password):
+                    session['user'] = data[0][0]
+                    return redirect('/')
+                else:
+                    return render_template('error.html',error = 'Wrong Email address or Password.')
+            else:
+                return render_template('error.html',error = 'Wrong Email address or Password.')
+                
+    
+        except Exception as e:
+            return render_template('error.html',error = str(e))
+        finally:
+            cursor.close()
+            db.close()
+    
+    if session.get('user'):
+        return render_template('userHome.html')
+    else:
+        return render_template('signin.html')
+    
+@app.route('/logout')
+def logout():
+    session.pop('user',None)
+    return redirect('/')
 
 
 ###
