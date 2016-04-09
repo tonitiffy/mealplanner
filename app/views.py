@@ -26,23 +26,28 @@ def signup():
     if request.method == 'POST':
         try:
             email       = request.form['email'].strip()
+            username    = request.form['username'].strip()
             password    = request.form['password'].strip()
+            firstname   = request.form['firstname'].strip()
+            lastname    = request.form['lastname'].strip()
+            gender      = request.form['gender'].strip()
+            birthday    = request.form['birthday'].strip()
             
-            if email and password:
+            if email and username and password and firstname and lastname and birthday and gender:
                 db      = mysql.connect()
                 cursor  = db.cursor()
-                hashed_password = generate_password_hash(password)
+                password_hash = generate_password_hash(password)
                 
-                cursor.callproc('sp_createUser',(email,hashed_password))
+                cursor.callproc('createUser',(email, username, password_hash, firstname, lastname, gender, birthday))
                 data = cursor.fetchall()
     
                 if len(data) is 0:
                     db.commit()
-                    return json.dumps({'message':'User created successfully !'})
+                    return json.dumps({'message':'Account successfully created!'})
                 else:
                     return json.dumps({'error':str(data[0])})
             else:
-                return json.dumps({'html':'<span>Enter the required fields</span>'})
+                return json.dumps({'html':'<span>All fields are required</span>'})
                 
         except Exception as e:
             return json.dumps({'error':str(e)})
@@ -56,12 +61,12 @@ def signup():
 def login():
     if request.method == 'POST':
         try:
-            username = request.form['inputEmail']
-            password = request.form['inputPassword']
+            username = request.form['username']
+            password = request.form['password']
             
             db      = mysql.connect()
             cursor  = db.cursor()
-            cursor.callproc('sp_validateLogin',(_username,))
+            cursor.callproc('validateLogin',(username))
             data    = cursor.fetchall()
             
             if len(data) > 0:
@@ -69,11 +74,10 @@ def login():
                     session['user'] = data[0][0]
                     return redirect('/')
                 else:
-                    return render_template('error.html',error = 'Wrong Email address or Password.')
+                    return render_template('error.html',error = 'Wrong username or Password.')
             else:
-                return render_template('error.html',error = 'Wrong Email address or Password.')
+                return render_template('error.html',error = 'Wrong username or Password.')
                 
-    
         except Exception as e:
             return render_template('error.html',error = str(e))
         finally:
@@ -85,11 +89,80 @@ def login():
     else:
         return render_template('signin.html')
     
-@app.route('/logout')
+@app.route('/logout/')
 def logout():
     session.pop('user',None)
     return redirect('/')
 
+@app.route('/addrecipe/', methods=['POST','GET'])
+def addrecipe():
+    if request.method == 'POST':
+        try:
+            if session.get('user'):
+                title       = request.form['title']
+                description = request.form['description']
+                
+                user        = session.get('user')
+    
+                db = mysql.connect()
+                cursor = db.cursor()
+                cursor.callproc('sp_addWish',(title,description,user))
+                data = cursor.fetchall()
+    
+                if len(data) is 0:
+                    db.commit()
+                    return redirect('/userHome')
+                else:
+                    return render_template('error.html',error = 'An error occurred!')
+    
+            else:
+                return render_template('error.html',error = 'Unauthorized Access')
+        except Exception as e:
+            return render_template('error.html',error = str(e))
+        finally:
+            cursor.close()
+            db.close()    
+    return render_template('addRecipe.html')
+    
+    
+@app.route('/recipes/')
+def getRecipes():
+    try:
+        if session.get('user'):
+            _user = session.get('user')
+
+            con = mysql.connect()
+            cursor = con.cursor()
+            cursor.callproc('sp_GetWishByUser',(_user,))
+            recipes = cursor.fetchall()
+
+            recipes_dict = []
+            for recipe in recipes:
+                recip_dict = {
+                        'Id': recipe[0],
+                        'Title': recipe[1],
+                        'Description': recipe[2],
+                        'Date': recipe[4]}
+                recipes_dict.append(recip_dict)
+
+            return json.dumps(recipes_dict)
+        else:
+            return render_template('error.html', error = 'Unauthorized Access')
+    except Exception as e:
+        return render_template('error.html', error = str(e))
+        
+@app.route('/recipe/<int:recipeid>')
+def getRecipe():
+    return
+
+@app.route('/mealplans/')
+def getMealPlans():
+    return
+    
+@app.route('/mealplan/<int:mealplanid>')
+def getMealPlan():
+    return
+    
 
 ###
 # The functions below should be applicable to all Flask apps.

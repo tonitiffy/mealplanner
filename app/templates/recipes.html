@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block main %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <table>
+        {% for recipe in recipes %}
+            <tr>
+                <td></td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

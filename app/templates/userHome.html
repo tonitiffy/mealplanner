@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% block title %}Home{% endblock %}
 
 {% block js %}
 <script type="text/javascript" src="{{ url_for('static', filename='js/signup.js') }}"></script>
@@ -8,5 +9,7 @@
 
 {% block main %}
 {% include "navbar.html" %}
+
+
 
 {% endblock %}
