@@ -106,7 +106,7 @@ def addrecipe():
     
                 db = mysql.connect()
                 cursor = db.cursor()
-                cursor.callproc('sp_addWish',(title,description,user))
+                cursor.callproc('addRecipe',(title,description,user))
                 data = cursor.fetchall()
     
                 if len(data) is 0:
@@ -155,6 +155,10 @@ def getRecipes():
 def getRecipe():
     return
 
+@app.route('/mealplan', methods=['POST'])
+def generate_mealplan():
+    return
+
 @app.route('/mealplans/')
 def getMealPlans():
     return
@@ -163,6 +167,9 @@ def getMealPlans():
 def getMealPlan():
     return
     
+@app.route('/mealplan/<int:mealplanid>/shoppinglist', methods=['GET'])
+def getShoppingList():
+    return
 
 ###
 # The functions below should be applicable to all Flask apps.

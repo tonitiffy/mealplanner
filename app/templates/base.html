@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap-theme.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/simple-sidebar.css') }}">
 
   {% block css %}{% endblock %}
   
@@ -19,6 +20,8 @@
 </head>
 
 <body>
+  
+  {% include "navbar.html" %}
 
   <div id="main" role="main">
     {% block main %}{% endblock %}

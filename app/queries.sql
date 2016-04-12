@@ -2,7 +2,21 @@
 
 
 /*Procedure for generating supermarket list*/
+/*Tables needed: mealplan, dailymeal, meal, recipe, */
+DELIMITER $$
+CREATE PROCEDURE createUser(
+    IN mealPlanID int
+)
+BEGIN
+    
+    
+    
+END$$
+DELIMITER ;
 
+select *, * from test1, test2 and test1.mp_id = test2.mp_id;
+select breakfast, lunch, dinner, snack1, snack2, snack3 from mealplan where mealplan_id = mealPlanID
+select monday, tuesday, wednesday, thursday, friday, saturday, sunday from dailymeal where dailymeal_id = dailyMealID
 
 /*Procedure for the creation of meals based on specified calorie count */
 
